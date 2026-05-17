@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.19)
 project(bellerophon LANGUAGES CXX)
 
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOUIC_SEARCH_PATHS ui)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
 set(CMAKE_PREFIX_PATH "/opt/Qt/6.11.0/gcc_64")
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
@@ -9,11 +14,12 @@ qt_standard_project_setup()
 
 qt_add_executable(bellerophon
     WIN32 MACOSX_BUNDLE
-    main.cpp
-    mainwindow.cpp
-    mainwindow.h
-    mainwindow.ui
+    src/main.cpp
+    src/mainwindow.cpp
+    src/mainwindow.h
+    ui/mainwindow.ui
 )
+target_include_directories(bellerophon PRIVATE src ui)
 
 target_link_libraries(bellerophon
     PRIVATE

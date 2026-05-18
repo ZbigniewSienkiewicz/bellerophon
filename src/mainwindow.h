@@ -3,6 +3,9 @@
 
 #include <QMainWindow>
 
+class QResizeEvent;
+class QShowEvent;
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -16,6 +19,10 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
+
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 
 private:
     Ui::MainWindow *ui;

@@ -13,29 +13,33 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
 qt_standard_project_setup()
 
 qt_add_executable(bellerophon
-    WIN32 MACOSX_BUNDLE
-    src/main.cpp
-    src/mainwindow.cpp
-    src/mainwindow.h
-    ui/mainwindow.ui
+        WIN32 MACOSX_BUNDLE
+        src/main.cpp
+        src/mainwindow.h
+        src/mainwindow.cpp
+        ui/mainwindow.ui
+        src/hexengine.h
+        src/hexengine.cpp
+        src/hexboard.h
+        src/hexboard.cpp
 )
 target_include_directories(bellerophon PRIVATE src ui)
 
 target_link_libraries(bellerophon
-    PRIVATE
+        PRIVATE
         Qt::Core
         Qt::Widgets
 )
 
 install(TARGETS bellerophon
-    BUNDLE  DESTINATION .
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        BUNDLE DESTINATION .
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 qt_generate_deploy_app_script(
-    TARGET bellerophon
-    OUTPUT_SCRIPT deploy_script
-    NO_UNSUPPORTED_PLATFORM_ERROR
+        TARGET bellerophon
+        OUTPUT_SCRIPT deploy_script
+        NO_UNSUPPORTED_PLATFORM_ERROR
 )
 install(SCRIPT ${deploy_script})

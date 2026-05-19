@@ -143,6 +143,7 @@ void HexBoard::addHexagon(int index) {
     }
 
     auto *hexItem = new QGraphicsPolygonItem(hexagon);
+    hexItem->setData(0, index); // Store index for later use if needed
 
     // Determine color based on q, r coordinates
     int colorIndex = (hex_coords.q - hex_coords.r + 10) % 3;
@@ -192,6 +193,7 @@ void HexBoard::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     QGraphicsScene::mousePressEvent(event);
     if (QGraphicsItem *item = mouseGrabberItem()) {
         if (item->flags() & QGraphicsItem::ItemIsMovable) {
+            m_startPos = item->pos();
             m_originalZ = item->zValue();
             item->setZValue(m_maxZ++);
         }
@@ -202,6 +204,28 @@ void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     if (QGraphicsItem *item = mouseGrabberItem()) {
         if (item->flags() & QGraphicsItem::ItemIsMovable) {
             item->setZValue(m_originalZ);
+
+            QList<QGraphicsItem *> itemsAtPos = items(event->scenePos());
+            const QGraphicsPolygonItem *hexItem = nullptr;
+            for (auto *i : itemsAtPos) {
+                if (const auto *poly = qgraphicsitem_cast<QGraphicsPolygonItem *>(i)) {
+                    hexItem = poly;
+                    break;
+                }
+            }
+
+            if (hexItem) {
+                const int index = hexItem->data(0).toInt();
+                const hexengine::HexCubeCoords &hex_coords = hexengine::get_hex_qrs(index);
+                constexpr qreal size = 30.0;
+                const qreal x = size * 1.5 * hex_coords.q;
+                const qreal y = size * 1.7320508075688773 * (hex_coords.r + hex_coords.q / 2.0);
+
+                const QRectF pieceRect = item->boundingRect();
+                item->setPos(x - pieceRect.width() / 2.0, y - pieceRect.height() / 2.0);
+            } else {
+                item->setPos(m_startPos);
+            }
         }
     }
     QGraphicsScene::mouseReleaseEvent(event);

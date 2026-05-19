@@ -20,6 +20,7 @@ public:
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+    QPointF m_startPos;
 
 private:
     static const PieceSource piece_sources[];

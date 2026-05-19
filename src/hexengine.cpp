@@ -29,6 +29,21 @@ namespace hexengine {
         }
     }
 
+    void init_hexengine() {
+        init_hex_qrs_table();
+        setup_board(main_board);
+    }
+
+    void setup_board(HBoard &board) {
+        set_piece(5, {PieceType::King, PieceSide::White});
+        set_piece(85, {PieceType::King, PieceSide::Black});
+        set_piece(10, {PieceType::Knight, PieceSide::White});
+        set_piece(86, {PieceType::Knight, PieceSide::White});
+        set_piece(20, {PieceType::Knight, PieceSide::Black});
+        set_piece(79, {PieceType::Knight, PieceSide::Black});
+        set_turn(PieceTurn::WhiteTurn);
+    }
+
     const HexCubeCoords &get_hex_qrs(const int index) {
         assert(index >=0 && index<HEXBOARD_SIZE);
         return hex_qrs[index];

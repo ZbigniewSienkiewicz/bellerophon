@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_PREFIX_PATH "/opt/Qt/6.11.0/gcc_64")
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Svg SvgWidgets)
 
 qt_standard_project_setup()
 
@@ -30,6 +30,8 @@ target_link_libraries(bellerophon
         PRIVATE
         Qt::Core
         Qt::Widgets
+        Qt::Svg
+        Qt::SvgWidgets
 )
 
 install(TARGETS bellerophon

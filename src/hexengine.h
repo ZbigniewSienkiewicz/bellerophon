@@ -38,6 +38,9 @@ namespace hexengine {
      */
     void init_hex_qrs_table();
 
+    void init_hexengine();
+    void setup_board(HBoard &board);
+
     const HexCubeCoords &get_hex_qrs(int index);
 
     const Piece &get_piece(int index);

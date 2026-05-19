@@ -4,6 +4,8 @@
 #include <QGraphicsScene>
 #include "hexengine.h"
 
+class QGraphicsSceneMouseEvent;
+
 class HexBoard : public QGraphicsScene
 {
     Q_OBJECT
@@ -15,11 +17,18 @@ public:
         QString path;
     };
 
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+
 private:
     static const PieceSource piece_sources[];
     void drawBoard();
+    void drawPieces();
     void addHexagon(int index);
     static const QString &get_piece_path(hexengine::Piece piece);
+    qreal m_maxZ;
+    qreal m_originalZ;
 };
 
 #endif // HEXBOARD_H

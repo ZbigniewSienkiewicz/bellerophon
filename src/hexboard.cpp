@@ -1,9 +1,13 @@
 #include "hexboard.h"
 #include <QGraphicsTextItem>
+#include <QGraphicsSvgItem>
+#include <QGraphicsSceneMouseEvent>
 #include <QFont>
 #include <QBrush>
 #include <QPen>
 #include <cmath>
+
+constexpr int COLUMN_COUNT = 11;
 
 const HexBoard::PieceSource HexBoard::piece_sources[] = {
     {{hexengine::PieceType::King, hexengine::PieceSide::White}, ":/res/images/pieces/king_white.svg" },
@@ -21,8 +25,10 @@ const HexBoard::PieceSource HexBoard::piece_sources[] = {
 };
 
 HexBoard::HexBoard(QObject *parent)
-    : QGraphicsScene(parent) {
+    : QGraphicsScene(parent), m_maxZ(100.0), m_originalZ(0.0) {
+    hexengine::init_hexengine();
     drawBoard();
+    drawPieces();
 }
 
 void HexBoard::drawBoard() {
@@ -52,8 +58,8 @@ void HexBoard::drawBoard() {
     }
 
     // Add row labels (left side): 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
-    for (int n = 1; n <= 11; ++n) {
-        const int q = (n <= 6) ? -5 : (n - 11);
+    for (int n = 1; n <= COLUMN_COUNT; ++n) {
+        const int q = (n <= 6) ? -5 : (n - COLUMN_COUNT);
         const int r = 6 - n;
 
         const qreal x = size * 1.5 * q;
@@ -73,8 +79,8 @@ void HexBoard::drawBoard() {
     }
 
     // Add row labels (right side): 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
-    for (int n = 1; n <= 11; ++n) {
-        const int q = (n <= 6) ? 5 : (11 - n);
+    for (int n = 1; n <= COLUMN_COUNT; ++n) {
+        const int q = (n <= 6) ? 5 : (COLUMN_COUNT - n);
         const int r = (n <= 6) ? (1 - n) : -5;
 
         const qreal x = size * 1.5 * q;
@@ -94,6 +100,30 @@ void HexBoard::drawBoard() {
     }
 
     setSceneRect(itemsBoundingRect());
+}
+
+void HexBoard::drawPieces() {
+    for (int i = 0; i < hexengine::HEXBOARD_SIZE; ++i) {
+        const hexengine::Piece piece = hexengine::get_piece(i);
+        if (piece.type != hexengine::Empty) {
+            QString path = get_piece_path(piece);
+            if (!path.isEmpty()) {
+                auto *pieceItem = new QGraphicsSvgItem(path);
+                pieceItem->setZValue(m_maxZ++);
+                pieceItem->setFlag(QGraphicsItem::ItemIsMovable);
+
+                const hexengine::HexCubeCoords &hex_coords = hexengine::get_hex_qrs(i);
+                constexpr qreal size = 30.0;
+                const qreal x = size * 1.5 * hex_coords.q;
+                const qreal y = size * 1.7320508075688773 * (hex_coords.r + hex_coords.q / 2.0);
+
+                QRectF pieceRect = pieceItem->boundingRect();
+                pieceItem->setPos(x - pieceRect.width() / 2.0, y - pieceRect.height() / 2.0);
+
+                addItem(pieceItem);
+            }
+        }
+    }
 }
 
 void HexBoard::addHexagon(int index) {
@@ -132,6 +162,20 @@ void HexBoard::addHexagon(int index) {
     hexItem->setPen(QPen(Qt::black)); // hexagon border
 
     addItem(hexItem);
+
+    auto *textItem = new QGraphicsTextItem(QString::number(index));
+    textItem->setZValue(1); // Ensure text is above hexagons
+    QFont font = textItem->font();
+    font.setPointSize(10);
+    //font.setBold(true);
+    textItem->setFont(font);
+    textItem->setDefaultTextColor(Qt::black);
+
+    // Center the text
+    QRectF textRect = textItem->boundingRect();
+    textItem->setPos(x - textRect.width() / 2.0, y - textRect.height() / 2.0);
+
+    addItem(textItem);
 }
 
 const QString & HexBoard::get_piece_path(const hexengine::Piece piece) {
@@ -142,4 +186,23 @@ const QString & HexBoard::get_piece_path(const hexengine::Piece piece) {
         }
     }
     return empty;
+}
+
+void HexBoard::mousePressEvent(QGraphicsSceneMouseEvent *event) {
+    QGraphicsScene::mousePressEvent(event);
+    if (QGraphicsItem *item = mouseGrabberItem()) {
+        if (item->flags() & QGraphicsItem::ItemIsMovable) {
+            m_originalZ = item->zValue();
+            item->setZValue(m_maxZ++);
+        }
+    }
+}
+
+void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
+    if (QGraphicsItem *item = mouseGrabberItem()) {
+        if (item->flags() & QGraphicsItem::ItemIsMovable) {
+            item->setZValue(m_originalZ);
+        }
+    }
+    QGraphicsScene::mouseReleaseEvent(event);
 }

@@ -37,6 +37,48 @@ void HexBoard::drawBoard() {
         addItem(label);
     }
 
+    // Add row labels (left side): 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+    for (int n = 1; n <= 11; ++n) {
+        const int q = (n <= 6) ? -5 : (n - 11);
+        const int r = 6 - n;
+
+        const qreal x = size * 1.5 * q;
+        const qreal y = size * 1.7320508075688773 * (r + q / 2.0);
+
+        auto *label = new QGraphicsTextItem(QString::number(n));
+        QFont font = label->font();
+        font.setBold(true);
+        font.setPointSize(12);
+        label->setFont(font);
+
+        // Center the text vertically to the left of the leftmost vertex
+        QRectF rect = label->boundingRect();
+        label->setPos(x - size - rect.width() + 6.0, y - rect.height() - 4.0);
+
+        addItem(label);
+    }
+
+    // Add row labels (right side): 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+    for (int n = 1; n <= 11; ++n) {
+        const int q = (n <= 6) ? 5 : (11 - n);
+        const int r = (n <= 6) ? (1 - n) : -5;
+
+        const qreal x = size * 1.5 * q;
+        const qreal y = size * 1.7320508075688773 * (r + q / 2.0);
+
+        auto *label = new QGraphicsTextItem(QString::number(n));
+        QFont font = label->font();
+        font.setBold(true);
+        font.setPointSize(12);
+        label->setFont(font);
+
+        // Center the text vertically to the right of the rightmost vertex
+        QRectF rect = label->boundingRect();
+        label->setPos(x + size - 6.0, y - rect.height() - 4.0);
+
+        addItem(label);
+    }
+
     setSceneRect(itemsBoundingRect());
 }
 

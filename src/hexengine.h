@@ -12,7 +12,7 @@ namespace hexengine {
 
     enum PieceTurn { WhiteTurn, BlackTurn };
 
-    enum PieceSide { None, WhiteSide, BlackSide };
+    enum PieceSide { None, White, Black };
 
     struct Piece {
         PieceType type;

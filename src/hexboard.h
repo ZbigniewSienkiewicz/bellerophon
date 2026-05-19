@@ -10,9 +10,16 @@ class HexBoard : public QGraphicsScene
 public:
     explicit HexBoard(QObject *parent = nullptr);
 
+    struct PieceSource {
+        hexengine::Piece piece;
+        QString path;
+    };
+
 private:
+    static const PieceSource piece_sources[];
     void drawBoard();
     void addHexagon(int index);
+    static const QString &get_piece_path(hexengine::Piece piece);
 };
 
 #endif // HEXBOARD_H

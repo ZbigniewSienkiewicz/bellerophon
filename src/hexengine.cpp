@@ -5,6 +5,9 @@
 #include "hexengine.h"
 
 #include <cassert>
+#include <QString>
+
+class QString;
 
 namespace hexengine {
     namespace {

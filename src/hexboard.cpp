@@ -1,10 +1,24 @@
 #include "hexboard.h"
-#include <QGraphicsPolygonItem>
 #include <QGraphicsTextItem>
 #include <QFont>
 #include <QBrush>
 #include <QPen>
 #include <cmath>
+
+const HexBoard::PieceSource HexBoard::piece_sources[] = {
+    {{hexengine::PieceType::King, hexengine::PieceSide::White}, ":/res/images/pieces/king_white.svg" },
+    {{hexengine::PieceType::King, hexengine::PieceSide::Black}, ":/res/images/pieces/king_black.svg" },
+    {{hexengine::PieceType::Knight, hexengine::PieceSide::White}, ":/res/images/pieces/knight_white.svg" },
+    {{hexengine::PieceType::Knight, hexengine::PieceSide::Black}, ":/res/images/pieces/knight_black.svg" },
+    {{hexengine::PieceType::Bishop, hexengine::PieceSide::White}, ":/res/images/pieces/bishop_white.svg" },
+    {{hexengine::PieceType::Bishop, hexengine::PieceSide::Black}, ":/res/images/pieces/bishop_black.svg" },
+    {{hexengine::PieceType::Rook, hexengine::PieceSide::White}, ":/res/images/pieces/rook_white.svg" },
+    {{hexengine::PieceType::Rook, hexengine::PieceSide::Black}, ":/res/images/pieces/rook_black.svg" },
+    {{hexengine::PieceType::Queen, hexengine::PieceSide::White}, ":/res/images/pieces/queen_white.svg" },
+    {{hexengine::PieceType::Queen, hexengine::PieceSide::Black}, ":/res/images/pieces/queen_black.svg" },
+    {{hexengine::PieceType::Pawn, hexengine::PieceSide::White}, ":/res/images/pieces/pawn_white.svg" },
+    {{hexengine::PieceType::Pawn, hexengine::PieceSide::Black}, ":/res/images/pieces/pawn_black.svg" }
+};
 
 HexBoard::HexBoard(QObject *parent)
     : QGraphicsScene(parent) {
@@ -118,4 +132,14 @@ void HexBoard::addHexagon(int index) {
     hexItem->setPen(QPen(Qt::black)); // hexagon border
 
     addItem(hexItem);
+}
+
+const QString & HexBoard::get_piece_path(const hexengine::Piece piece) {
+    static const QString empty = "";
+    for (const auto & source : piece_sources) {
+        if (source.piece.type == piece.type && source.piece.side == piece.side) {
+            return source.path;
+        }
+    }
+    return empty;
 }

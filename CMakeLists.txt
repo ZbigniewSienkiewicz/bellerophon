@@ -22,6 +22,7 @@ qt_add_executable(bellerophon
         src/hexengine.cpp
         src/hexboard.h
         src/hexboard.cpp
+        pieces.qrc
 )
 target_include_directories(bellerophon PRIVATE src ui)
 

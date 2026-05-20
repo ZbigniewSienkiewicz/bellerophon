@@ -15,9 +15,9 @@ namespace hexengine {
         HBoard main_board = {{{PieceType::Empty, PieceSide::None}}, PieceTurn::WhiteTurn};
     }
 
-    int king_moves[HEXBOARD_SIZE][MAX_KING_OR_KNIGHT_MOVES];
-    int knight_moves[HEXBOARD_SIZE][MAX_KING_OR_KNIGHT_MOVES];
-    int rook_moves[HEXBOARD_SIZE][6][MAX_ROOK_RAY_LENGTH];
+    int king_moves[HEXBOARD_SIZE][MAX_KING_MOVES];
+    int knight_moves[HEXBOARD_SIZE][MAX_KNIGHT_MOVES];
+    int rook_moves[HEXBOARD_SIZE][ROOK_RAYS][MAX_ROOK_RAY_LENGTH];
 
     void init_hex_qrs_table() {
         int index = 0;
@@ -41,7 +41,7 @@ namespace hexengine {
         setup_board(main_board);
     }
 
-    const HBoard& get_main_board() {
+    const HBoard &get_main_board() {
         return main_board;
     }
 
@@ -52,6 +52,10 @@ namespace hexengine {
         set_piece(69, {PieceType::Knight, PieceSide::White});
         set_piece(21, {PieceType::Knight, PieceSide::Black});
         set_piece(61, {PieceType::Knight, PieceSide::Black});
+        set_piece(20, {PieceType::Rook, PieceSide::White});
+        set_piece(13, {PieceType::Rook, PieceSide::Black});
+        set_piece(77, {PieceType::Rook, PieceSide::White});
+        set_piece(70, {PieceType::Rook, PieceSide::Black});
         set_turn(PieceTurn::WhiteTurn);
     }
 
@@ -80,7 +84,7 @@ namespace hexengine {
 
     void init_king_moves() {
         for (int i = 0; i < HEXBOARD_SIZE; ++i) {
-            for (int j = 0; j < MAX_KING_OR_KNIGHT_MOVES; ++j) {
+            for (int j = 0; j < MAX_KING_MOVES; ++j) {
                 king_moves[i][j] = -1;
             }
 
@@ -106,7 +110,7 @@ namespace hexengine {
                 }
 
                 if (can_move) {
-                    if (move_idx < MAX_KING_OR_KNIGHT_MOVES) {
+                    if (move_idx < MAX_KING_MOVES) {
                         king_moves[i][move_idx++] = j;
                     }
                 }
@@ -116,7 +120,7 @@ namespace hexengine {
 
     void init_knight_moves() {
         for (int i = 0; i < HEXBOARD_SIZE; ++i) {
-            for (int j = 0; j < MAX_KING_OR_KNIGHT_MOVES; ++j) {
+            for (int j = 0; j < MAX_KNIGHT_MOVES; ++j) {
                 knight_moves[i][j] = -1;
             }
 
@@ -140,7 +144,7 @@ namespace hexengine {
                 }
 
                 if (can_move) {
-                    if (move_idx < MAX_KING_OR_KNIGHT_MOVES) {
+                    if (move_idx < MAX_KNIGHT_MOVES) {
                         knight_moves[i][move_idx++] = j;
                     }
                 }
@@ -152,18 +156,18 @@ namespace hexengine {
         struct Delta {
             int dq, dr, ds;
         };
-        Delta directions[6] = {
-                {0,  -1, 1},  // 1) q same, r-1
-                {0,  1,  -1},  // 2) q same, r+1
-                {-1, 0,  1},  // 3) q-1, r same
-                {1,  0,  -1},  // 4) q+1, r same
-                {1,  -1, 0},  // 5) q+1, r-1
-                {-1, 1,  0}   // 6) q-1, r+1
+        const Delta directions[ROOK_RAYS] = {
+            {0, -1, 1}, // 1) q same, r-1
+            {0, 1, -1}, // 2) q same, r+1
+            {-1, 0, 1}, // 3) q-1, r same
+            {1, 0, -1}, // 4) q+1, r same
+            {1, -1, 0}, // 5) q+1, r-1
+            {-1, 1, 0} // 6) q-1, r+1
         };
 
         for (int i = 0; i < HEXBOARD_SIZE; ++i) {
             const auto &source = hex_qrs[i];
-            for (int d = 0; d < 6; ++d) {
+            for (int d = 0; d < ROOK_RAYS; ++d) {
                 const auto &delta = directions[d];
                 int current_q = source.q;
                 int current_r = source.r;
@@ -175,7 +179,7 @@ namespace hexengine {
                     current_r += delta.dr;
                     current_s += delta.ds;
 
-                    if (std::abs(current_q) > 5 || std::abs(current_r) > 5 || std::abs(current_s) > 5) {
+                    if (std::abs(current_q) > MAX_Q || std::abs(current_r) > MAX_R || std::abs(current_s) > MAX_S) {
                         break;
                     }
 
@@ -196,19 +200,6 @@ namespace hexengine {
                     if (step >= MAX_ROOK_RAY_LENGTH - 1) break;
                 }
                 rook_moves[i][d][step] = -1;
-            }
-        }
-
-        for (int i = 0; i < HEXBOARD_SIZE; ++i) {
-            std::cout << "Rook moves from index " << i << " (" << hex_qrs[i].q << "," << hex_qrs[i].r << "," << hex_qrs[i].s
-                      << "):" << std::endl;
-            for (int d = 0; d < 6; ++d) {
-                std::cout << "  Dir " << d + 1 << ": ";
-                for (int s = 0; s < MAX_ROOK_RAY_LENGTH; ++s) {
-                    if (rook_moves[i][d][s] == -1) break;
-                    std::cout << rook_moves[i][d][s] << " ";
-                }
-                std::cout << std::endl;
             }
         }
     }
@@ -253,14 +244,23 @@ namespace hexengine {
         for (int i = 0; i < HEXBOARD_SIZE; ++i) {
             if (board.board[i].side == opponent_side) {
                 if (board.board[i].type == PieceType::King) {
-                    for (int j = 0; j < MAX_KING_OR_KNIGHT_MOVES; ++j) {
+                    for (int j = 0; j < MAX_KING_MOVES; ++j) {
                         if (king_moves[i][j] == king_pos) return true;
                         if (king_moves[i][j] == -1) break;
                     }
                 } else if (board.board[i].type == PieceType::Knight) {
-                    for (int j = 0; j < MAX_KING_OR_KNIGHT_MOVES; ++j) {
+                    for (int j = 0; j < MAX_KNIGHT_MOVES; ++j) {
                         if (knight_moves[i][j] == king_pos) return true;
                         if (knight_moves[i][j] == -1) break;
+                    }
+                } else if (board.board[i].type == PieceType::Rook) {
+                    for (int r = 0; r < ROOK_RAYS; ++r) {
+                        for (int s = 0; s < MAX_ROOK_RAY_LENGTH; ++s) {
+                            int target = rook_moves[i][r][s];
+                            if (target == -1) break;
+                            if (target == king_pos) return true;
+                            if (board.board[target].type != PieceType::Empty) break;
+                        }
                     }
                 }
             }
@@ -272,7 +272,7 @@ namespace hexengine {
         // Basic validation: must be a legal move
         auto legal_moves = get_legal_moves_at(main_board, move.from);
         bool legal = false;
-        for (const auto& m : legal_moves) {
+        for (const auto &m: legal_moves) {
             if (m.to == move.to) {
                 legal = true;
                 break;
@@ -291,19 +291,19 @@ namespace hexengine {
         const PieceSide side = (board.turn == PieceTurn::WhiteTurn) ? PieceSide::White : PieceSide::Black;
         for (int i = 0; i < HEXBOARD_SIZE; ++i) {
             if (board.board[i].type == PieceType::King && board.board[i].side == side) {
-                auto piece_moves = get_legal_king_moves_index(board, i, only_captures);
+                auto piece_moves = get_legal_king_moves_at(board, i, only_captures);
                 moves.insert(moves.end(), piece_moves.begin(), piece_moves.end());
             }
         }
         return moves;
     }
 
-    std::vector<Move> get_legal_king_moves_index(const HBoard &board, const int index, const bool only_captures) {
+    std::vector<Move> get_legal_king_moves_at(const HBoard &board, const int index, const bool only_captures) {
         std::vector<Move> moves;
         const Piece piece = board.board[index];
         if (piece.type != PieceType::King) return moves;
 
-        for (int j = 0; j < MAX_KING_OR_KNIGHT_MOVES; ++j) {
+        for (int j = 0; j < MAX_KING_MOVES; ++j) {
             const int target = king_moves[index][j];
             if (target == -1) break;
 
@@ -323,19 +323,19 @@ namespace hexengine {
         const PieceSide side = (board.turn == PieceTurn::WhiteTurn) ? PieceSide::White : PieceSide::Black;
         for (int i = 0; i < HEXBOARD_SIZE; ++i) {
             if (board.board[i].type == PieceType::Knight && board.board[i].side == side) {
-                auto piece_moves = get_legal_knight_moves_index(board, i, only_captures);
+                auto piece_moves = get_legal_knight_moves_at(board, i, only_captures);
                 moves.insert(moves.end(), piece_moves.begin(), piece_moves.end());
             }
         }
         return moves;
     }
 
-    std::vector<Move> get_legal_knight_moves_index(const HBoard &board, const int index, const bool only_captures) {
+    std::vector<Move> get_legal_knight_moves_at(const HBoard &board, const int index, const bool only_captures) {
         std::vector<Move> moves;
         const Piece piece = board.board[index];
         if (piece.type != PieceType::Knight) return moves;
 
-        for (int j = 0; j < MAX_KING_OR_KNIGHT_MOVES; ++j) {
+        for (int j = 0; j < MAX_KNIGHT_MOVES; ++j) {
             const int target = knight_moves[index][j];
             if (target == -1) break;
 
@@ -350,14 +350,52 @@ namespace hexengine {
         return moves;
     }
 
+    std::vector<Move> get_legal_rook_moves(const HBoard &board, const bool only_captures) {
+        std::vector<Move> moves;
+        const PieceSide side = (board.turn == PieceTurn::WhiteTurn) ? PieceSide::White : PieceSide::Black;
+        for (int i = 0; i < HEXBOARD_SIZE; ++i) {
+            if (board.board[i].type == PieceType::Rook && board.board[i].side == side) {
+                auto piece_moves = get_legal_rook_moves_at(board, i, only_captures);
+                moves.insert(moves.end(), piece_moves.begin(), piece_moves.end());
+            }
+        }
+        return moves;
+    }
+
+    std::vector<Move> get_legal_rook_moves_at(const HBoard &board, const int index, const bool only_captures) {
+        std::vector<Move> moves;
+        const Piece piece = board.board[index];
+        if (piece.type != PieceType::Rook) return moves;
+
+        for (int r = 0; r < ROOK_RAYS; ++r) {
+            for (int s = 0; s < MAX_ROOK_RAY_LENGTH; ++s) {
+                const int target = rook_moves[index][r][s];
+                if (target == -1) break;
+
+                const Piece &target_piece = board.board[target];
+                if (target_piece.side == piece.side || target_piece.type == PieceType::King) break;
+
+                if (!(only_captures && target_piece.type == PieceType::Empty)) {
+                    Move move = {index, target, target_piece};
+                    if (!is_checked(board, move)) {
+                        moves.push_back(move);
+                    }
+                }
+
+                if (target_piece.type != PieceType::Empty) break;
+            }
+        }
+        return moves;
+    }
+
     std::vector<Move> get_legal_moves_at(const HBoard &board, const int index) {
         const Piece piece = board.board[index];
-        if (piece.type == PieceType::King) {
-            return get_legal_king_moves_index(board, index);
-        } else if (piece.type == PieceType::Knight) {
-            return get_legal_knight_moves_index(board, index);
+        switch (piece.type) {
+            case PieceType::King: return get_legal_king_moves_at(board, index);
+            case PieceType::Knight: return get_legal_knight_moves_at(board, index);
+            case PieceType::Rook: return get_legal_rook_moves_at(board, index);
+            default: return {};
         }
-        return {};
     }
 
     std::vector<Move> get_all_legal_moves(const HBoard &board, const bool only_captures) {
@@ -366,6 +404,9 @@ namespace hexengine {
         moves.insert(moves.end(), k_moves.begin(), k_moves.end());
         auto kn_moves = get_legal_knight_moves(board, only_captures);
         moves.insert(moves.end(), kn_moves.begin(), kn_moves.end());
+        auto r_moves = get_legal_rook_moves(board, only_captures);
+        moves.insert(moves.end(), r_moves.begin(), r_moves.end());
+
         return moves;
     }
 }

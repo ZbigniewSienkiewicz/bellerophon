@@ -10,8 +10,13 @@
 
 namespace hexengine {
     constexpr int HEXBOARD_SIZE = 91;
-    constexpr int MAX_KING_OR_KNIGHT_MOVES = 12;
-    constexpr int MAX_ROOK_RAY_LENGTH = 11;
+    constexpr int MAX_KING_MOVES = 12;
+    constexpr int MAX_KNIGHT_MOVES = 12;
+    constexpr int ROOK_RAYS = 6;
+    constexpr int MAX_ROOK_RAY_LENGTH = 10;
+    constexpr int MAX_Q = 5;
+    constexpr int MAX_R = 5;
+    constexpr int MAX_S = 5;
 
     enum PieceType { Empty, King, Pawn, Knight, Bishop, Rook, Queen };
 
@@ -45,9 +50,9 @@ namespace hexengine {
 
     const HBoard& get_main_board();
 
-    extern int king_moves[HEXBOARD_SIZE][MAX_KING_OR_KNIGHT_MOVES];
-    extern int knight_moves[HEXBOARD_SIZE][MAX_KING_OR_KNIGHT_MOVES];
-    extern int rook_moves[HEXBOARD_SIZE][6][MAX_ROOK_RAY_LENGTH];
+    extern int king_moves[HEXBOARD_SIZE][MAX_KING_MOVES];
+    extern int knight_moves[HEXBOARD_SIZE][MAX_KNIGHT_MOVES];
+    extern int rook_moves[HEXBOARD_SIZE][ROOK_RAYS][MAX_ROOK_RAY_LENGTH];
 
     /**
      * Initializes the `hex_qrs` table with coordinates for a hexagonal grid.
@@ -84,11 +89,15 @@ namespace hexengine {
 
     std::vector<Move> get_legal_king_moves(const HBoard &board, bool only_captures = false);
 
-    std::vector<Move> get_legal_king_moves_index(const HBoard &board, int index, bool only_captures = false);
+    std::vector<Move> get_legal_king_moves_at(const HBoard &board, int index, bool only_captures = false);
 
     std::vector<Move> get_legal_knight_moves(const HBoard &board, bool only_captures = false);
 
-    std::vector<Move> get_legal_knight_moves_index(const HBoard &board, int index, bool only_captures = false);
+    std::vector<Move> get_legal_knight_moves_at(const HBoard &board, int index, bool only_captures = false);
+
+    std::vector<Move> get_legal_rook_moves(const HBoard &board, bool only_captures = false);
+
+    std::vector<Move> get_legal_rook_moves_at(const HBoard &board, int index, bool only_captures = false);
 
     std::vector<Move> get_legal_moves_at(const HBoard &board, int index);
 

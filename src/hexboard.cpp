@@ -10,6 +10,7 @@
 
 constexpr int COLUMN_COUNT = 11;
 
+#define PRINT_INDEX
 const HexBoard::PieceSource HexBoard::piece_sources[] = {
     {{hexengine::PieceType::King, hexengine::PieceSide::White}, ":/res/images/pieces/king_white.svg" },
     {{hexengine::PieceType::King, hexengine::PieceSide::Black}, ":/res/images/pieces/king_black.svg" },
@@ -183,7 +184,11 @@ void HexBoard::addHexagon(int index) {
 
     addItem(hexItem);
 
+#ifdef PRINT_INDEX
     auto *textItem = new QGraphicsTextItem(QString::number(index));
+#else
+    auto *textItem = new QGraphicsTextItem(QString("%1,%2,%3").arg(hex_coords.q).arg(hex_coords.r).arg(hex_coords.s));
+#endif
     textItem->setZValue(1); // Ensure text is above hexagons
     QFont font = textItem->font();
     font.setPointSize(10);

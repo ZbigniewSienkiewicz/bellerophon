@@ -11,6 +11,7 @@
 namespace hexengine {
     constexpr int HEXBOARD_SIZE = 91;
     constexpr int MAX_KING_OR_KNIGHT_MOVES = 12;
+    constexpr int MAX_ROOK_RAY_LENGTH = 11;
 
     enum PieceType { Empty, King, Pawn, Knight, Bishop, Rook, Queen };
 
@@ -46,6 +47,7 @@ namespace hexengine {
 
     extern int king_moves[HEXBOARD_SIZE][MAX_KING_OR_KNIGHT_MOVES];
     extern int knight_moves[HEXBOARD_SIZE][MAX_KING_OR_KNIGHT_MOVES];
+    extern int rook_moves[HEXBOARD_SIZE][6][MAX_ROOK_RAY_LENGTH];
 
     /**
      * Initializes the `hex_qrs` table with coordinates for a hexagonal grid.
@@ -70,6 +72,8 @@ namespace hexengine {
     void init_king_moves();
 
     void init_knight_moves();
+
+    void init_rook_moves();
 
     std::string move_to_uci(const Move &move);
     

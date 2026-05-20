@@ -17,6 +17,7 @@ namespace hexengine {
 
     int king_moves[HEXBOARD_SIZE][MAX_KING_OR_KNIGHT_MOVES];
     int knight_moves[HEXBOARD_SIZE][MAX_KING_OR_KNIGHT_MOVES];
+    int rook_moves[HEXBOARD_SIZE][6][MAX_ROOK_RAY_LENGTH];
 
     void init_hex_qrs_table() {
         int index = 0;
@@ -36,6 +37,7 @@ namespace hexengine {
         init_hex_qrs_table();
         init_king_moves();
         init_knight_moves();
+        init_rook_moves();
         setup_board(main_board);
     }
 
@@ -44,12 +46,12 @@ namespace hexengine {
     }
 
     void setup_board(HBoard &board) {
-        set_piece(5, {PieceType::King, PieceSide::White});
-        set_piece(85, {PieceType::King, PieceSide::Black});
-        set_piece(10, {PieceType::Knight, PieceSide::White});
-        set_piece(86, {PieceType::Knight, PieceSide::White});
-        set_piece(20, {PieceType::Knight, PieceSide::Black});
-        set_piece(79, {PieceType::Knight, PieceSide::Black});
+        set_piece(60, {PieceType::King, PieceSide::White});
+        set_piece(51, {PieceType::King, PieceSide::Black});
+        set_piece(29, {PieceType::Knight, PieceSide::White});
+        set_piece(69, {PieceType::Knight, PieceSide::White});
+        set_piece(21, {PieceType::Knight, PieceSide::Black});
+        set_piece(61, {PieceType::Knight, PieceSide::Black});
         set_turn(PieceTurn::WhiteTurn);
     }
 
@@ -142,6 +144,71 @@ namespace hexengine {
                         knight_moves[i][move_idx++] = j;
                     }
                 }
+            }
+        }
+    }
+
+    void init_rook_moves() {
+        struct Delta {
+            int dq, dr, ds;
+        };
+        Delta directions[6] = {
+                {0,  -1, 1},  // 1) q same, r-1
+                {0,  1,  -1},  // 2) q same, r+1
+                {-1, 0,  1},  // 3) q-1, r same
+                {1,  0,  -1},  // 4) q+1, r same
+                {1,  -1, 0},  // 5) q+1, r-1
+                {-1, 1,  0}   // 6) q-1, r+1
+        };
+
+        for (int i = 0; i < HEXBOARD_SIZE; ++i) {
+            const auto &source = hex_qrs[i];
+            for (int d = 0; d < 6; ++d) {
+                const auto &delta = directions[d];
+                int current_q = source.q;
+                int current_r = source.r;
+                int current_s = source.s;
+
+                int step = 0;
+                while (true) {
+                    current_q += delta.dq;
+                    current_r += delta.dr;
+                    current_s += delta.ds;
+
+                    if (std::abs(current_q) > 5 || std::abs(current_r) > 5 || std::abs(current_s) > 5) {
+                        break;
+                    }
+
+                    int target_index = -1;
+                    for (int j = 0; j < HEXBOARD_SIZE; ++j) {
+                        if (hex_qrs[j].q == current_q && hex_qrs[j].r == current_r) {
+                            target_index = j;
+                            break;
+                        }
+                    }
+
+                    if (target_index != -1) {
+                        rook_moves[i][d][step++] = target_index;
+                    } else {
+                        break;
+                    }
+
+                    if (step >= MAX_ROOK_RAY_LENGTH - 1) break;
+                }
+                rook_moves[i][d][step] = -1;
+            }
+        }
+
+        for (int i = 0; i < HEXBOARD_SIZE; ++i) {
+            std::cout << "Rook moves from index " << i << " (" << hex_qrs[i].q << "," << hex_qrs[i].r << "," << hex_qrs[i].s
+                      << "):" << std::endl;
+            for (int d = 0; d < 6; ++d) {
+                std::cout << "  Dir " << d + 1 << ": ";
+                for (int s = 0; s < MAX_ROOK_RAY_LENGTH; ++s) {
+                    if (rook_moves[i][d][s] == -1) break;
+                    std::cout << rook_moves[i][d][s] << " ";
+                }
+                std::cout << std::endl;
             }
         }
     }

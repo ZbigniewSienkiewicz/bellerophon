@@ -104,6 +104,14 @@ namespace hexengine {
 
     std::vector<Move> get_legal_rook_moves_at(const HBoard &board, int index, bool only_captures = false);
 
+    std::vector<Move> get_legal_bishop_moves(const HBoard &board, bool only_captures = false);
+
+    std::vector<Move> get_legal_bishop_moves_at(const HBoard &board, int index, bool only_captures = false);
+
+    std::vector<Move> get_legal_queen_moves(const HBoard &board, bool only_captures = false);
+
+    std::vector<Move> get_legal_queen_moves_at(const HBoard &board, int index, bool only_captures = false);
+
     std::vector<Move> get_legal_moves_at(const HBoard &board, int index);
 
     std::vector<Move> get_all_legal_moves(const HBoard &board, bool only_captures = false);

@@ -10,7 +10,7 @@
 
 constexpr int COLUMN_COUNT = 11;
 
-//#define PRINT_INDEX
+#define PRINT_INDEX
 const HexBoard::PieceSource HexBoard::piece_sources[] = {
     {{hexengine::PieceType::King, hexengine::PieceSide::White}, ":/res/images/pieces/king_white.svg" },
     {{hexengine::PieceType::King, hexengine::PieceSide::Black}, ":/res/images/pieces/king_black.svg" },
@@ -41,7 +41,7 @@ void HexBoard::drawBoard() {
 
     // Add column labels: a, b, c, d, e, f, g, h, i, k, l (skipping j)
     const char *labels[] = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "k", "l"};
-    const qreal size = 30.0;
+    constexpr qreal size = 30.0;
     for (int q = -5; q <= 5; ++q) {
         const int r_end = (q <= 0) ? 5 : (5 - q);
         const qreal x = size * 1.5 * q;

@@ -39,6 +39,7 @@ namespace hexengine {
         init_king_moves();
         init_knight_moves();
         init_rook_moves();
+        init_bishop_moves();
         setup_board(main_board);
     }
 
@@ -57,6 +58,14 @@ namespace hexengine {
         set_piece(13, {PieceType::Rook, PieceSide::Black});
         set_piece(77, {PieceType::Rook, PieceSide::White});
         set_piece(70, {PieceType::Rook, PieceSide::Black});
+        set_piece(48, {PieceType::Bishop, PieceSide::White});
+        set_piece(49, {PieceType::Bishop, PieceSide::White});
+        set_piece(50, {PieceType::Bishop, PieceSide::White});
+        set_piece(40, {PieceType::Bishop, PieceSide::Black});
+        set_piece(41, {PieceType::Bishop, PieceSide::Black});
+        set_piece(42, {PieceType::Bishop, PieceSide::Black});
+        set_piece(39, {PieceType::Queen, PieceSide::White});
+        set_piece(30, {PieceType::Queen, PieceSide::Black});
         set_turn(PieceTurn::WhiteTurn);
     }
 
@@ -198,7 +207,7 @@ namespace hexengine {
                         break;
                     }
 
-                    if (step >= MAX_ROOK_RAY_LENGTH - 1) break;
+                    //if (step > MAX_ROOK_RAY_LENGTH - 1) break;
                 }
                 rook_moves[i][d][step] = -1;
             }
@@ -206,7 +215,55 @@ namespace hexengine {
     }
 
     void init_bishop_moves() {
-        // fill
+        struct Delta {
+            int dq, dr, ds;
+        };
+        const Delta directions[BISHOP_RAYS] = {
+            {-1, -1, 2}, // 1) q decreases by one, r decreases by one
+            {1, 1, -2},  // 2) q increases by one, r increases by one
+            {-2, 1, 1},  // 3) q decreases by two, r increases by one
+            {2, -1, -1}, // 4) q increases by two, r decreases by one
+            {-1, 2, -1}, // 5) q decreases by one, r increases by two
+            {1, -2, 1}   // 6) q increases by one, r decreases by two
+        };
+
+        for (int i = 0; i < HEXBOARD_SIZE; ++i) {
+            const auto &source = hex_qrs[i];
+            for (int d = 0; d < BISHOP_RAYS; ++d) {
+                const auto &delta = directions[d];
+                int current_q = source.q;
+                int current_r = source.r;
+                int current_s = source.s;
+
+                int step = 0;
+                while (true) {
+                    current_q += delta.dq;
+                    current_r += delta.dr;
+                    current_s += delta.ds;
+
+                    if (std::abs(current_q) > MAX_Q || std::abs(current_r) > MAX_R || std::abs(current_s) > MAX_S) {
+                        break;
+                    }
+
+                    int target_index = -1;
+                    for (int j = 0; j < HEXBOARD_SIZE; ++j) {
+                        if (hex_qrs[j].q == current_q && hex_qrs[j].r == current_r) {
+                            target_index = j;
+                            break;
+                        }
+                    }
+
+                    if (target_index != -1) {
+                        bishop_moves[i][d][step++] = target_index;
+                    } else {
+                        break;
+                    }
+
+                    //if (step > MAX_BISHOP_RAY_LENGTH - 1) break;
+                }
+                bishop_moves[i][d][step] = -1;
+            }
+        }
     }
 
     std::string move_to_uci(const Move &move) {
@@ -262,6 +319,32 @@ namespace hexengine {
                     for (int r = 0; r < ROOK_RAYS; ++r) {
                         for (int s = 0; s < MAX_ROOK_RAY_LENGTH; ++s) {
                             int target = rook_moves[i][r][s];
+                            if (target == -1) break;
+                            if (target == king_pos) return true;
+                            if (board.board[target].type != PieceType::Empty) break;
+                        }
+                    }
+                } else if (board.board[i].type == PieceType::Bishop) {
+                    for (int r = 0; r < BISHOP_RAYS; ++r) {
+                        for (int s = 0; s < MAX_BISHOP_RAY_LENGTH; ++s) {
+                            int target = bishop_moves[i][r][s];
+                            if (target == -1) break;
+                            if (target == king_pos) return true;
+                            if (board.board[target].type != PieceType::Empty) break;
+                        }
+                    }
+                } else if (board.board[i].type == PieceType::Queen) {
+                    for (int r = 0; r < ROOK_RAYS; ++r) {
+                        for (int s = 0; s < MAX_ROOK_RAY_LENGTH; ++s) {
+                            int target = rook_moves[i][r][s];
+                            if (target == -1) break;
+                            if (target == king_pos) return true;
+                            if (board.board[target].type != PieceType::Empty) break;
+                        }
+                    }
+                    for (int r = 0; r < BISHOP_RAYS; ++r) {
+                        for (int s = 0; s < MAX_BISHOP_RAY_LENGTH; ++s) {
+                            int target = bishop_moves[i][r][s];
                             if (target == -1) break;
                             if (target == king_pos) return true;
                             if (board.board[target].type != PieceType::Empty) break;
@@ -393,12 +476,111 @@ namespace hexengine {
         return moves;
     }
 
+    std::vector<Move> get_legal_bishop_moves(const HBoard &board, const bool only_captures) {
+        std::vector<Move> moves;
+        const PieceSide side = (board.turn == PieceTurn::WhiteTurn) ? PieceSide::White : PieceSide::Black;
+        for (int i = 0; i < HEXBOARD_SIZE; ++i) {
+            if (board.board[i].type == PieceType::Bishop && board.board[i].side == side) {
+                auto piece_moves = get_legal_bishop_moves_at(board, i, only_captures);
+                moves.insert(moves.end(), piece_moves.begin(), piece_moves.end());
+            }
+        }
+        return moves;
+    }
+
+    std::vector<Move> get_legal_bishop_moves_at(const HBoard &board, const int index, const bool only_captures) {
+        std::vector<Move> moves;
+        const Piece piece = board.board[index];
+        if (piece.type != PieceType::Bishop) return moves;
+
+        for (int r = 0; r < BISHOP_RAYS; ++r) {
+            for (int s = 0; s < MAX_BISHOP_RAY_LENGTH; ++s) {
+                const int target = bishop_moves[index][r][s];
+                if (target == -1) break;
+
+                const Piece &target_piece = board.board[target];
+                if (target_piece.side == piece.side || target_piece.type == PieceType::King) break;
+
+                if (!(only_captures && target_piece.type == PieceType::Empty)) {
+                    Move move = {index, target, target_piece};
+                    if (!is_checked(board, move)) {
+                        moves.push_back(move);
+                    }
+                }
+
+                if (target_piece.type != PieceType::Empty) break;
+            }
+        }
+        return moves;
+    }
+
+    std::vector<Move> get_legal_queen_moves(const HBoard &board, const bool only_captures) {
+        std::vector<Move> moves;
+        const PieceSide side = (board.turn == PieceTurn::WhiteTurn) ? PieceSide::White : PieceSide::Black;
+        for (int i = 0; i < HEXBOARD_SIZE; ++i) {
+            if (board.board[i].type == PieceType::Queen && board.board[i].side == side) {
+                auto piece_moves = get_legal_queen_moves_at(board, i, only_captures);
+                moves.insert(moves.end(), piece_moves.begin(), piece_moves.end());
+            }
+        }
+        return moves;
+    }
+
+    std::vector<Move> get_legal_queen_moves_at(const HBoard &board, const int index, const bool only_captures) {
+        std::vector<Move> moves;
+        const Piece piece = board.board[index];
+        if (piece.type != PieceType::Queen) return moves;
+
+        // Rook-like moves
+        for (int r = 0; r < ROOK_RAYS; ++r) {
+            for (int s = 0; s < MAX_ROOK_RAY_LENGTH; ++s) {
+                const int target = rook_moves[index][r][s];
+                if (target == -1) break;
+
+                const Piece &target_piece = board.board[target];
+                if (target_piece.side == piece.side || target_piece.type == PieceType::King) break;
+
+                if (!(only_captures && target_piece.type == PieceType::Empty)) {
+                    Move move = {index, target, target_piece};
+                    if (!is_checked(board, move)) {
+                        moves.push_back(move);
+                    }
+                }
+
+                if (target_piece.type != PieceType::Empty) break;
+            }
+        }
+
+        // Bishop-like moves
+        for (int r = 0; r < BISHOP_RAYS; ++r) {
+            for (int s = 0; s < MAX_BISHOP_RAY_LENGTH; ++s) {
+                const int target = bishop_moves[index][r][s];
+                if (target == -1) break;
+
+                const Piece &target_piece = board.board[target];
+                if (target_piece.side == piece.side || target_piece.type == PieceType::King) break;
+
+                if (!(only_captures && target_piece.type == PieceType::Empty)) {
+                    Move move = {index, target, target_piece};
+                    if (!is_checked(board, move)) {
+                        moves.push_back(move);
+                    }
+                }
+
+                if (target_piece.type != PieceType::Empty) break;
+            }
+        }
+        return moves;
+    }
+
     std::vector<Move> get_legal_moves_at(const HBoard &board, const int index) {
         const Piece piece = board.board[index];
         switch (piece.type) {
             case PieceType::King: return get_legal_king_moves_at(board, index);
             case PieceType::Knight: return get_legal_knight_moves_at(board, index);
             case PieceType::Rook: return get_legal_rook_moves_at(board, index);
+            case PieceType::Bishop: return get_legal_bishop_moves_at(board, index);
+            case PieceType::Queen: return get_legal_queen_moves_at(board, index);
             default: return {};
         }
     }
@@ -411,6 +593,10 @@ namespace hexengine {
         moves.insert(moves.end(), kn_moves.begin(), kn_moves.end());
         auto r_moves = get_legal_rook_moves(board, only_captures);
         moves.insert(moves.end(), r_moves.begin(), r_moves.end());
+        auto b_moves = get_legal_bishop_moves(board, only_captures);
+        moves.insert(moves.end(), b_moves.begin(), b_moves.end());
+        auto q_moves = get_legal_queen_moves(board, only_captures);
+        moves.insert(moves.end(), q_moves.begin(), q_moves.end());
 
         return moves;
     }

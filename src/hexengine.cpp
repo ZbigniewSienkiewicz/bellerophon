@@ -11,13 +11,14 @@
 
 namespace hexengine {
     namespace {
-        HexCubeCoords hex_qrs[HEXBOARD_SIZE];
+        CubeCoords hex_qrs[HEXBOARD_SIZE];
         HBoard main_board = {{{PieceType::Empty, PieceSide::None}}, PieceTurn::WhiteTurn};
     }
 
     int king_moves[HEXBOARD_SIZE][MAX_KING_MOVES];
     int knight_moves[HEXBOARD_SIZE][MAX_KNIGHT_MOVES];
     int rook_moves[HEXBOARD_SIZE][ROOK_RAYS][MAX_ROOK_RAY_LENGTH];
+    int bishop_moves[HEXBOARD_SIZE][BISHOP_RAYS][MAX_BISHOP_RAY_LENGTH];
 
     void init_hex_qrs_table() {
         int index = 0;
@@ -59,7 +60,7 @@ namespace hexengine {
         set_turn(PieceTurn::WhiteTurn);
     }
 
-    const HexCubeCoords &get_hex_qrs(const int index) {
+    const CubeCoords &get_hex_qrs(const int index) {
         assert(index >=0 && index<HEXBOARD_SIZE);
         return hex_qrs[index];
     }
@@ -94,7 +95,7 @@ namespace hexengine {
             for (int j = 0; j < HEXBOARD_SIZE; ++j) {
                 if (i == j) continue;
 
-                const HexCubeCoords &target = hex_qrs[j];
+                const CubeCoords &target = hex_qrs[j];
                 const int dq = std::abs(source.q - target.q);
                 const int dr = std::abs(source.r - target.r);
                 const int ds = std::abs(source.s - target.s);
@@ -130,7 +131,7 @@ namespace hexengine {
             for (int j = 0; j < HEXBOARD_SIZE; ++j) {
                 if (i == j) continue;
 
-                const HexCubeCoords &target = hex_qrs[j];
+                const CubeCoords &target = hex_qrs[j];
                 const int dq = std::abs(source.q - target.q);
                 const int dr = std::abs(source.r - target.r);
                 const int ds = std::abs(source.s - target.s);
@@ -204,11 +205,15 @@ namespace hexengine {
         }
     }
 
+    void init_bishop_moves() {
+        // fill
+    }
+
     std::string move_to_uci(const Move &move) {
         constexpr char col_labels[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'k', 'l'};
 
         auto index_to_uci = [&](const int idx) -> std::string {
-            const HexCubeCoords &c = hex_qrs[idx];
+            const CubeCoords &c = hex_qrs[idx];
             const int col_idx = c.q + 5;
             const int r_max = 5 - std::max(c.q, 0);
             const int row = r_max - c.r + 1;

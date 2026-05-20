@@ -14,6 +14,8 @@ namespace hexengine {
     constexpr int MAX_KNIGHT_MOVES = 12;
     constexpr int ROOK_RAYS = 6;
     constexpr int MAX_ROOK_RAY_LENGTH = 10;
+    constexpr int BISHOP_RAYS = 6;
+    constexpr int MAX_BISHOP_RAY_LENGTH = 5;
     constexpr int MAX_Q = 5;
     constexpr int MAX_R = 5;
     constexpr int MAX_S = 5;
@@ -29,7 +31,7 @@ namespace hexengine {
         PieceSide side;
     };
 
-    struct HexCubeCoords {
+    struct CubeCoords {
         int q;
         int r;
         int s;
@@ -53,6 +55,7 @@ namespace hexengine {
     extern int king_moves[HEXBOARD_SIZE][MAX_KING_MOVES];
     extern int knight_moves[HEXBOARD_SIZE][MAX_KNIGHT_MOVES];
     extern int rook_moves[HEXBOARD_SIZE][ROOK_RAYS][MAX_ROOK_RAY_LENGTH];
+    extern int bishop_moves[HEXBOARD_SIZE][BISHOP_RAYS][MAX_BISHOP_RAY_LENGTH];
 
     /**
      * Initializes the `hex_qrs` table with coordinates for a hexagonal grid.
@@ -64,7 +67,7 @@ namespace hexengine {
 
     void setup_board(HBoard &board);
 
-    const HexCubeCoords &get_hex_qrs(int index);
+    const CubeCoords &get_hex_qrs(int index);
 
     const Piece &get_piece(int index);
 
@@ -79,6 +82,8 @@ namespace hexengine {
     void init_knight_moves();
 
     void init_rook_moves();
+
+    void init_bishop_moves();
 
     std::string move_to_uci(const Move &move);
     

@@ -10,7 +10,7 @@
 
 constexpr int COLUMN_COUNT = 11;
 
-#define PRINT_INDEX
+//#define PRINT_INDEX
 const HexBoard::PieceSource HexBoard::piece_sources[] = {
     {{hexengine::PieceType::King, hexengine::PieceSide::White}, ":/res/images/pieces/king_white.svg" },
     {{hexengine::PieceType::King, hexengine::PieceSide::Black}, ":/res/images/pieces/king_black.svg" },
@@ -120,7 +120,7 @@ void HexBoard::drawPieces() {
                 pieceItem->setFlag(QGraphicsItem::ItemIsMovable, my_turn);
                 pieceItem->setData(1, (int)piece.side);
 
-                const hexengine::HexCubeCoords &hex_coords = hexengine::get_hex_qrs(i);
+                const hexengine::CubeCoords &hex_coords = hexengine::get_hex_qrs(i);
                 constexpr qreal size = 30.0;
                 const qreal x = size * 1.5 * hex_coords.q;
                 const qreal y = size * 1.7320508075688773 * (hex_coords.r + hex_coords.q / 2.0);
@@ -147,7 +147,7 @@ void HexBoard::updatePieceMovableFlags() {
 }
 
 void HexBoard::addHexagon(int index) {
-    const hexengine::HexCubeCoords &hex_coords = hexengine::get_hex_qrs(index);
+    const hexengine::CubeCoords &hex_coords = hexengine::get_hex_qrs(index);
     qreal size = 30.0;
 
     // Flat-topped hex coordinates
@@ -277,7 +277,7 @@ void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 
                 if (hexengine::make_move(move)) {
                     if (move.captured_piece.type != hexengine::Empty) {
-                        const hexengine::HexCubeCoords &target_coords = hexengine::get_hex_qrs(targetIndex);
+                        const hexengine::CubeCoords &target_coords = hexengine::get_hex_qrs(targetIndex);
                         constexpr qreal size = 30.0;
                         const qreal tx = size * 1.5 * target_coords.q;
                         const qreal ty = size * 1.7320508075688773 * (target_coords.r + target_coords.q / 2.0);
@@ -291,7 +291,7 @@ void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
                         }
                     }
 
-                    const hexengine::HexCubeCoords &hex_coords = hexengine::get_hex_qrs(targetIndex);
+                    const hexengine::CubeCoords &hex_coords = hexengine::get_hex_qrs(targetIndex);
                     constexpr qreal size = 30.0;
                     const qreal x = size * 1.5 * hex_coords.q;
                     const qreal y = size * 1.7320508075688773 * (hex_coords.r + hex_coords.q / 2.0);
@@ -318,10 +318,10 @@ void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     QGraphicsScene::mouseReleaseEvent(event);
 }
 
-void HexBoard::highlightMoves(int index) {
+void HexBoard::highlightMoves(const int index) {
     const auto moves = hexengine::get_legal_moves_at(hexengine::get_main_board(), index);
     for (const auto& move : moves) {
-        const hexengine::HexCubeCoords &coords = hexengine::get_hex_qrs(move.to);
+        const hexengine::CubeCoords &coords = hexengine::get_hex_qrs(move.to);
         constexpr qreal size = 30.0;
         const qreal x = size * 1.5 * coords.q;
         const qreal y = size * 1.7320508075688773 * (coords.r + coords.q / 2.0);
@@ -350,7 +350,7 @@ void HexBoard::clearHighlights() {
 
 void HexBoard::highlightKingIfChecked() {
     auto updateKingHighlight = [&](hexengine::PieceSide side, QGraphicsEllipseItem*& highlightItem) {
-        bool checked = hexengine::is_king_in_check(hexengine::get_main_board(), side);
+        const bool checked = hexengine::is_king_in_check(hexengine::get_main_board(), side);
         if (checked) {
             int king_idx = -1;
             const auto& board = hexengine::get_main_board();
@@ -361,7 +361,7 @@ void HexBoard::highlightKingIfChecked() {
                 }
             }
             if (king_idx != -1) {
-                const hexengine::HexCubeCoords &coords = hexengine::get_hex_qrs(king_idx);
+                const hexengine::CubeCoords &coords = hexengine::get_hex_qrs(king_idx);
                 constexpr qreal size = 30.0;
                 const qreal x = size * 1.5 * coords.q;
                 const qreal y = size * 1.7320508075688773 * (coords.r + coords.q / 2.0);

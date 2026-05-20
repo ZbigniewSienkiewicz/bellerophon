@@ -1,5 +1,5 @@
 #include "hexboard.h"
-#include <QGraphicsTextItem>
+//#include <QGraphicsTextItem>
 #include <QGraphicsSvgItem>
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsEllipseItem>
@@ -106,17 +106,17 @@ void HexBoard::drawBoard() {
 }
 
 void HexBoard::drawPieces() {
-    const hexengine::PieceTurn turn = hexengine::get_turn();
+    const hexengine::PieceTurn turn = hexengine::get_turn(hexengine::get_main_board());
     for (int i = 0; i < hexengine::HEXBOARD_SIZE; ++i) {
-        const hexengine::Piece piece = hexengine::get_piece(i);
+        const hexengine::Piece piece = hexengine::get_piece(hexengine::get_main_board(), i);
         if (piece.type != hexengine::Empty) {
             QString path = get_piece_path(piece);
             if (!path.isEmpty()) {
                 auto *pieceItem = new QGraphicsSvgItem(path);
                 pieceItem->setZValue(m_maxZ++);
                 
-                const bool my_turn = (piece.side == hexengine::White && turn == hexengine::WhiteTurn) ||
-                                     (piece.side == hexengine::Black && turn == hexengine::BlackTurn);
+                const bool my_turn = (piece.side == hexengine::White && turn == hexengine::WhiteColor) ||
+                                     (piece.side == hexengine::Black && turn == hexengine::BlackColor);
                 pieceItem->setFlag(QGraphicsItem::ItemIsMovable, my_turn);
                 pieceItem->setData(1, (int)piece.side);
 
@@ -134,13 +134,13 @@ void HexBoard::drawPieces() {
     }
 }
 
-void HexBoard::updatePieceMovableFlags() {
-    const hexengine::PieceTurn turn = hexengine::get_turn();
+void HexBoard::updatePieceMovableFlags() const {
+    const hexengine::PieceTurn turn = hexengine::get_turn(hexengine::get_main_board());
     for (auto* item : items()) {
         if (auto* pieceItem = qgraphicsitem_cast<QGraphicsSvgItem*>(item)) {
-            hexengine::PieceSide side = static_cast<hexengine::PieceSide>(pieceItem->data(1).toInt());
-            const bool my_turn = (side == hexengine::White && turn == hexengine::WhiteTurn) ||
-                                 (side == hexengine::Black && turn == hexengine::BlackTurn);
+            const auto side = static_cast<hexengine::PieceSide>(pieceItem->data(1).toInt());
+            const bool my_turn = (side == hexengine::White && turn == hexengine::WhiteColor) ||
+                                 (side == hexengine::Black && turn == hexengine::BlackColor);
             pieceItem->setFlag(QGraphicsItem::ItemIsMovable, my_turn);
         }
     }
@@ -242,10 +242,10 @@ void HexBoard::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             m_originalZ = pieceItem->zValue();
             pieceItem->setZValue(m_maxZ + 10.0);
 
-            const hexengine::Piece piece = hexengine::get_piece(index);
-            const hexengine::PieceTurn turn = hexengine::get_turn();
-            const bool my_turn = (piece.side == hexengine::White && turn == hexengine::WhiteTurn) ||
-                                 (piece.side == hexengine::Black && turn == hexengine::BlackTurn);
+            const hexengine::Piece piece = hexengine::get_piece(hexengine::get_main_board(), index);
+            const hexengine::PieceTurn turn = hexengine::get_turn(hexengine::get_main_board());
+            const bool my_turn = (piece.side == hexengine::White && turn == hexengine::WhiteColor) ||
+                                 (piece.side == hexengine::Black && turn == hexengine::BlackColor);
 
             if (my_turn) {
                 m_startIndex = index;
@@ -273,7 +273,8 @@ void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 
             if (hexItem && m_startIndex != -1) {
                 const int targetIndex = hexItem->data(0).toInt();
-                hexengine::Move move = {m_startIndex, targetIndex, hexengine::get_piece(targetIndex)};
+                hexengine::Move move = {m_startIndex, targetIndex,
+                    hexengine::get_piece(hexengine::get_main_board(), targetIndex)};
 
                 if (hexengine::make_move(move)) {
                     if (move.captured_piece.type != hexengine::Empty) {

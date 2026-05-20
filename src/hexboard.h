@@ -27,7 +27,7 @@ private:
     static const PieceSource piece_sources[];
     void drawBoard();
     void drawPieces();
-    void updatePieceMovableFlags();
+    void updatePieceMovableFlags() const;
     void addHexagon(int index);
     static const QString &get_piece_path(hexengine::Piece piece);
     void highlightMoves(int index);

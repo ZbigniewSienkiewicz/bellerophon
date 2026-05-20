@@ -16,15 +16,20 @@ namespace hexengine {
     constexpr int MAX_ROOK_RAY_LENGTH = 10;
     constexpr int BISHOP_RAYS = 6;
     constexpr int MAX_BISHOP_RAY_LENGTH = 5;
+    constexpr int MAX_PAWN_MOVE_TYPE_MOVES = 2;
+    constexpr int PAWN_MOVE_TYPE = 2;
+    constexpr int PAWN_COLOR = 2;
     constexpr int MAX_Q = 5;
     constexpr int MAX_R = 5;
     constexpr int MAX_S = 5;
 
     enum PieceType { Empty, King, Pawn, Knight, Bishop, Rook, Queen };
 
-    enum PieceTurn { WhiteTurn, BlackTurn };
+    enum PieceTurn { WhiteColor, BlackColor };
 
     enum PieceSide { None, White, Black };
+
+    enum PawnMoveType { Forward, Capture };
 
     struct Piece {
         PieceType type;
@@ -38,11 +43,13 @@ namespace hexengine {
     };
 
     using Board = Piece[HEXBOARD_SIZE];
+    using Color = PieceTurn;
 
     struct Move {
         int from;
         int to;
         Piece captured_piece;
+        PieceType promotion;
     };
 
     struct HBoard {
@@ -50,12 +57,13 @@ namespace hexengine {
         PieceTurn turn;
     };
 
-    const HBoard& get_main_board();
+    const HBoard &get_main_board();
 
     extern int king_moves[HEXBOARD_SIZE][MAX_KING_MOVES];
     extern int knight_moves[HEXBOARD_SIZE][MAX_KNIGHT_MOVES];
     extern int rook_moves[HEXBOARD_SIZE][ROOK_RAYS][MAX_ROOK_RAY_LENGTH];
     extern int bishop_moves[HEXBOARD_SIZE][BISHOP_RAYS][MAX_BISHOP_RAY_LENGTH];
+    extern int pawn_moves[HEXBOARD_SIZE][PAWN_COLOR][PAWN_MOVE_TYPE][MAX_PAWN_MOVE_TYPE_MOVES];
 
     /**
      * Initializes the `hex_qrs` table with coordinates for a hexagonal grid.
@@ -69,11 +77,13 @@ namespace hexengine {
 
     const CubeCoords &get_hex_qrs(int index);
 
-    const Piece &get_piece(int index);
+    const Piece &get_piece(const HBoard &board, int index);
 
-    void set_piece(int index, Piece piece);
+    void set_piece(HBoard &board, int index, Piece piece);
 
-    PieceTurn get_turn();
+    PieceTurn get_turn(const HBoard &board);
+
+    void set_turn(HBoard &board, PieceTurn turn);
 
     void set_turn(PieceTurn turn);
 
@@ -85,9 +95,12 @@ namespace hexengine {
 
     void init_bishop_moves();
 
+    void init_pawn_moves();
+
     std::string move_to_uci(const Move &move);
-    
+
     bool is_checked(const HBoard &board, const Move &move);
+
     bool is_king_in_check(const HBoard &board, PieceSide side);
 
     bool make_move(const Move &move);
@@ -111,6 +124,10 @@ namespace hexengine {
     std::vector<Move> get_legal_queen_moves(const HBoard &board, bool only_captures = false);
 
     std::vector<Move> get_legal_queen_moves_at(const HBoard &board, int index, bool only_captures = false);
+
+    std::vector<Move> get_legal_pawn_moves(const HBoard &board, bool only_captures = false);
+
+    std::vector<Move> get_legal_pawn_moves_at(const HBoard &board, int index, bool only_captures = false);
 
     std::vector<Move> get_legal_moves_at(const HBoard &board, int index);
 

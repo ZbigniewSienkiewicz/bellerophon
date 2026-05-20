@@ -5,8 +5,12 @@
 #ifndef GLAUCUS_HEXENGINE_H
 #define GLAUCUS_HEXENGINE_H
 
+#include <string>
+#include <vector>
+
 namespace hexengine {
     constexpr int HEXBOARD_SIZE = 91;
+    constexpr int MAX_KING_OR_KNIGHT_MOVES = 12;
 
     enum PieceType { Empty, King, Pawn, Knight, Bishop, Rook, Queen };
 
@@ -27,10 +31,21 @@ namespace hexengine {
 
     using Board = Piece[HEXBOARD_SIZE];
 
+    struct Move {
+        int from;
+        int to;
+        Piece captured_piece;
+    };
+
     struct HBoard {
         Board board;
         PieceTurn turn;
     };
+
+    const HBoard& get_main_board();
+
+    extern int king_moves[HEXBOARD_SIZE][MAX_KING_OR_KNIGHT_MOVES];
+    extern int knight_moves[HEXBOARD_SIZE][MAX_KING_OR_KNIGHT_MOVES];
 
     /**
      * Initializes the `hex_qrs` table with coordinates for a hexagonal grid.
@@ -39,6 +54,7 @@ namespace hexengine {
     void init_hex_qrs_table();
 
     void init_hexengine();
+
     void setup_board(HBoard &board);
 
     const HexCubeCoords &get_hex_qrs(int index);
@@ -50,5 +66,28 @@ namespace hexengine {
     PieceTurn get_turn();
 
     void set_turn(PieceTurn turn);
+
+    void init_king_moves();
+
+    void init_knight_moves();
+
+    std::string move_to_uci(const Move &move);
+    
+    bool is_checked(const HBoard &board, const Move &move);
+    bool is_king_in_check(const HBoard &board, PieceSide side);
+
+    bool make_move(const Move &move);
+
+    std::vector<Move> get_legal_king_moves(const HBoard &board, bool only_captures = false);
+
+    std::vector<Move> get_legal_king_moves_index(const HBoard &board, int index, bool only_captures = false);
+
+    std::vector<Move> get_legal_knight_moves(const HBoard &board, bool only_captures = false);
+
+    std::vector<Move> get_legal_knight_moves_index(const HBoard &board, int index, bool only_captures = false);
+
+    std::vector<Move> get_legal_moves_at(const HBoard &board, int index);
+
+    std::vector<Move> get_all_legal_moves(const HBoard &board, bool only_captures = false);
 }
 #endif //GLAUCUS_HEXENGINE_H

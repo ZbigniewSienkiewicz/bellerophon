@@ -21,15 +21,24 @@ protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
     QPointF m_startPos;
+    int m_startIndex = -1;
 
 private:
     static const PieceSource piece_sources[];
     void drawBoard();
     void drawPieces();
+    void updatePieceMovableFlags();
     void addHexagon(int index);
     static const QString &get_piece_path(hexengine::Piece piece);
+    void highlightMoves(int index);
+    void clearHighlights();
+    void highlightKingIfChecked();
     qreal m_maxZ;
     qreal m_originalZ;
+    QGraphicsItem* m_pressedItem = nullptr;
+    QList<QGraphicsEllipseItem*> m_highlights;
+    QGraphicsEllipseItem* m_whiteKingCheckHighlight = nullptr;
+    QGraphicsEllipseItem* m_blackKingCheckHighlight = nullptr;
 };
 
 #endif // HEXBOARD_H

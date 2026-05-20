@@ -2,6 +2,7 @@
 #include <QGraphicsTextItem>
 #include <QGraphicsSvgItem>
 #include <QGraphicsSceneMouseEvent>
+#include <QGraphicsEllipseItem>
 #include <QFont>
 #include <QBrush>
 #include <QPen>
@@ -29,6 +30,7 @@ HexBoard::HexBoard(QObject *parent)
     hexengine::init_hexengine();
     drawBoard();
     drawPieces();
+    highlightKingIfChecked();
 }
 
 void HexBoard::drawBoard() {
@@ -103,6 +105,7 @@ void HexBoard::drawBoard() {
 }
 
 void HexBoard::drawPieces() {
+    const hexengine::PieceTurn turn = hexengine::get_turn();
     for (int i = 0; i < hexengine::HEXBOARD_SIZE; ++i) {
         const hexengine::Piece piece = hexengine::get_piece(i);
         if (piece.type != hexengine::Empty) {
@@ -110,7 +113,11 @@ void HexBoard::drawPieces() {
             if (!path.isEmpty()) {
                 auto *pieceItem = new QGraphicsSvgItem(path);
                 pieceItem->setZValue(m_maxZ++);
-                pieceItem->setFlag(QGraphicsItem::ItemIsMovable);
+                
+                const bool my_turn = (piece.side == hexengine::White && turn == hexengine::WhiteTurn) ||
+                                     (piece.side == hexengine::Black && turn == hexengine::BlackTurn);
+                pieceItem->setFlag(QGraphicsItem::ItemIsMovable, my_turn);
+                pieceItem->setData(1, (int)piece.side);
 
                 const hexengine::HexCubeCoords &hex_coords = hexengine::get_hex_qrs(i);
                 constexpr qreal size = 30.0;
@@ -122,6 +129,18 @@ void HexBoard::drawPieces() {
 
                 addItem(pieceItem);
             }
+        }
+    }
+}
+
+void HexBoard::updatePieceMovableFlags() {
+    const hexengine::PieceTurn turn = hexengine::get_turn();
+    for (auto* item : items()) {
+        if (auto* pieceItem = qgraphicsitem_cast<QGraphicsSvgItem*>(item)) {
+            hexengine::PieceSide side = static_cast<hexengine::PieceSide>(pieceItem->data(1).toInt());
+            const bool my_turn = (side == hexengine::White && turn == hexengine::WhiteTurn) ||
+                                 (side == hexengine::Black && turn == hexengine::BlackTurn);
+            pieceItem->setFlag(QGraphicsItem::ItemIsMovable, my_turn);
         }
     }
 }
@@ -190,21 +209,54 @@ const QString & HexBoard::get_piece_path(const hexengine::Piece piece) {
 }
 
 void HexBoard::mousePressEvent(QGraphicsSceneMouseEvent *event) {
-    QGraphicsScene::mousePressEvent(event);
-    if (QGraphicsItem *item = mouseGrabberItem()) {
-        if (item->flags() & QGraphicsItem::ItemIsMovable) {
-            m_startPos = item->pos();
-            m_originalZ = item->zValue();
-            item->setZValue(m_maxZ++);
+    clearHighlights();
+    m_pressedItem = nullptr;
+    m_startIndex = -1;
+
+    QList<QGraphicsItem *> itemsAtPos = items(event->scenePos());
+    QGraphicsSvgItem *pieceItem = nullptr;
+    for (auto *i : itemsAtPos) {
+        if (auto *p = qgraphicsitem_cast<QGraphicsSvgItem *>(i)) {
+            pieceItem = p;
+            break;
         }
     }
+
+    if (pieceItem) {
+        int index = -1;
+        for (auto *i : itemsAtPos) {
+            if (const auto *poly = qgraphicsitem_cast<QGraphicsPolygonItem *>(i)) {
+                index = poly->data(0).toInt();
+                break;
+            }
+        }
+
+        if (index != -1) {
+            highlightMoves(index);
+            m_pressedItem = pieceItem;
+            m_originalZ = pieceItem->zValue();
+            pieceItem->setZValue(m_maxZ + 10.0);
+
+            const hexengine::Piece piece = hexengine::get_piece(index);
+            const hexengine::PieceTurn turn = hexengine::get_turn();
+            const bool my_turn = (piece.side == hexengine::White && turn == hexengine::WhiteTurn) ||
+                                 (piece.side == hexengine::Black && turn == hexengine::BlackTurn);
+
+            if (my_turn) {
+                m_startIndex = index;
+                m_startPos = pieceItem->pos();
+            }
+        }
+    }
+
+    QGraphicsScene::mousePressEvent(event);
 }
 
 void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
-    if (QGraphicsItem *item = mouseGrabberItem()) {
-        if (item->flags() & QGraphicsItem::ItemIsMovable) {
-            item->setZValue(m_originalZ);
-
+    clearHighlights();
+    bool moved = false;
+    if (m_pressedItem) {
+        if (m_pressedItem->flags() & QGraphicsItem::ItemIsMovable) {
             QList<QGraphicsItem *> itemsAtPos = items(event->scenePos());
             const QGraphicsPolygonItem *hexItem = nullptr;
             for (auto *i : itemsAtPos) {
@@ -214,19 +266,119 @@ void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
                 }
             }
 
-            if (hexItem) {
-                const int index = hexItem->data(0).toInt();
-                const hexengine::HexCubeCoords &hex_coords = hexengine::get_hex_qrs(index);
-                constexpr qreal size = 30.0;
-                const qreal x = size * 1.5 * hex_coords.q;
-                const qreal y = size * 1.7320508075688773 * (hex_coords.r + hex_coords.q / 2.0);
+            if (hexItem && m_startIndex != -1) {
+                const int targetIndex = hexItem->data(0).toInt();
+                hexengine::Move move = {m_startIndex, targetIndex, hexengine::get_piece(targetIndex)};
 
-                const QRectF pieceRect = item->boundingRect();
-                item->setPos(x - pieceRect.width() / 2.0, y - pieceRect.height() / 2.0);
-            } else {
-                item->setPos(m_startPos);
+                if (hexengine::make_move(move)) {
+                    if (move.captured_piece.type != hexengine::Empty) {
+                        const hexengine::HexCubeCoords &target_coords = hexengine::get_hex_qrs(targetIndex);
+                        constexpr qreal size = 30.0;
+                        const qreal tx = size * 1.5 * target_coords.q;
+                        const qreal ty = size * 1.7320508075688773 * (target_coords.r + target_coords.q / 2.0);
+
+                        QList<QGraphicsItem*> itemsAtTargetPos = items(QPointF(tx, ty));
+                        for (auto* targetItem : itemsAtTargetPos) {
+                            if (targetItem != m_pressedItem && qgraphicsitem_cast<QGraphicsSvgItem*>(targetItem)) {
+                                removeItem(targetItem);
+                                delete targetItem;
+                            }
+                        }
+                    }
+
+                    const hexengine::HexCubeCoords &hex_coords = hexengine::get_hex_qrs(targetIndex);
+                    constexpr qreal size = 30.0;
+                    const qreal x = size * 1.5 * hex_coords.q;
+                    const qreal y = size * 1.7320508075688773 * (hex_coords.r + hex_coords.q / 2.0);
+
+                    const QRectF pieceRect = m_pressedItem->boundingRect();
+                    m_pressedItem->setPos(x - pieceRect.width() / 2.0, y - pieceRect.height() / 2.0);
+                    moved = true;
+                    m_pressedItem->setZValue(m_maxZ++);
+                    updatePieceMovableFlags();
+                    highlightKingIfChecked();
+                }
             }
+
+            if (!moved) {
+                m_pressedItem->setPos(m_startPos);
+                m_pressedItem->setZValue(m_originalZ);
+            }
+        } else {
+            m_pressedItem->setZValue(m_originalZ);
         }
     }
+    m_startIndex = -1;
+    m_pressedItem = nullptr;
     QGraphicsScene::mouseReleaseEvent(event);
+}
+
+void HexBoard::highlightMoves(int index) {
+    const auto moves = hexengine::get_legal_moves_at(hexengine::get_main_board(), index);
+    for (const auto& move : moves) {
+        const hexengine::HexCubeCoords &coords = hexengine::get_hex_qrs(move.to);
+        constexpr qreal size = 30.0;
+        const qreal x = size * 1.5 * coords.q;
+        const qreal y = size * 1.7320508075688773 * (coords.r + coords.q / 2.0);
+
+        constexpr qreal circleSize = 15.0;
+        auto* circle = new QGraphicsEllipseItem(x - circleSize/2, y - circleSize/2, circleSize, circleSize);
+        if (move.captured_piece.type != hexengine::Empty) {
+            circle->setBrush(QBrush(Qt::red));
+        } else {
+            circle->setBrush(QBrush(Qt::green));
+        }
+        circle->setPen(Qt::NoPen);
+        circle->setZValue(m_maxZ + 5.0);
+        addItem(circle);
+        m_highlights.append(circle);
+    }
+}
+
+void HexBoard::clearHighlights() {
+    for (auto* item : m_highlights) {
+        removeItem(item);
+        delete item;
+    }
+    m_highlights.clear();
+}
+
+void HexBoard::highlightKingIfChecked() {
+    auto updateKingHighlight = [&](hexengine::PieceSide side, QGraphicsEllipseItem*& highlightItem) {
+        bool checked = hexengine::is_king_in_check(hexengine::get_main_board(), side);
+        if (checked) {
+            int king_idx = -1;
+            const auto& board = hexengine::get_main_board();
+            for (int i=0; i<hexengine::HEXBOARD_SIZE; ++i) {
+                if (board.board[i].type == hexengine::King && board.board[i].side == side) {
+                    king_idx = i;
+                    break;
+                }
+            }
+            if (king_idx != -1) {
+                const hexengine::HexCubeCoords &coords = hexengine::get_hex_qrs(king_idx);
+                constexpr qreal size = 30.0;
+                const qreal x = size * 1.5 * coords.q;
+                const qreal y = size * 1.7320508075688773 * (coords.r + coords.q / 2.0);
+
+                qreal circleSize = 50.0;
+                if (!highlightItem) {
+                    highlightItem = new QGraphicsEllipseItem();
+                    addItem(highlightItem);
+                }
+                highlightItem->setRect(x - circleSize/2, y - circleSize/2, circleSize, circleSize);
+                highlightItem->setBrush(Qt::NoBrush);
+                highlightItem->setPen(QPen(Qt::red, 3));
+                highlightItem->setZValue(m_maxZ + 2);
+                highlightItem->show();
+            }
+        } else {
+            if (highlightItem) {
+                highlightItem->hide();
+            }
+        }
+    };
+
+    updateKingHighlight(hexengine::White, m_whiteKingCheckHighlight);
+    updateKingHighlight(hexengine::Black, m_blackKingCheckHighlight);
 }

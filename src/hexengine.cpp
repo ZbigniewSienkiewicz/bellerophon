@@ -62,49 +62,49 @@ namespace hexengine {
     }
 
     void setup_board(HBoard &board) {
-        // set_piece(board, 60, {PieceType::King, PieceSide::White});
-        // set_piece(board, 51, {PieceType::King, PieceSide::Black});
-        // set_piece(board, 29, {PieceType::Knight, PieceSide::White});
-        // set_piece(board, 69, {PieceType::Knight, PieceSide::White});
-        // set_piece(board, 21, {PieceType::Knight, PieceSide::Black});
-        // set_piece(board, 61, {PieceType::Knight, PieceSide::Black});
-        // set_piece(board, 20, {PieceType::Rook, PieceSide::White});
-        // set_piece(board, 13, {PieceType::Rook, PieceSide::Black});
-        // set_piece(board, 77, {PieceType::Rook, PieceSide::White});
-        // set_piece(board, 70, {PieceType::Rook, PieceSide::Black});
-        // set_piece(board, 48, {PieceType::Bishop, PieceSide::White});
-        // set_piece(board, 49, {PieceType::Bishop, PieceSide::White});
-        // set_piece(board, 50, {PieceType::Bishop, PieceSide::White});
-        // set_piece(board, 40, {PieceType::Bishop, PieceSide::Black});
-        // set_piece(board, 41, {PieceType::Bishop, PieceSide::Black});
-        // set_piece(board, 42, {PieceType::Bishop, PieceSide::Black});
-        // set_piece(board, 39, {PieceType::Queen, PieceSide::White});
-        // set_piece(board, 30, {PieceType::Queen, PieceSide::Black});
-
-        // set_piece(board, 12, {PieceType::Pawn, PieceSide::White});
-        // set_piece(board, 19, {PieceType::Pawn, PieceSide::White});
-        // set_piece(board, 27, {PieceType::Pawn, PieceSide::White});
-        // set_piece(board, 36, {PieceType::Pawn, PieceSide::White});
-        // set_piece(board, 46, {PieceType::Pawn, PieceSide::White});
-        // set_piece(board, 57, {PieceType::Pawn, PieceSide::White});
-        // set_piece(board, 67, {PieceType::Pawn, PieceSide::White});
-        // set_piece(board, 76, {PieceType::Pawn, PieceSide::White});
-        // set_piece(board, 84, {PieceType::Pawn, PieceSide::White});
-        // set_piece(board, 6, {PieceType::Pawn, PieceSide::Black});
-        // set_piece(board, 14, {PieceType::Pawn, PieceSide::Black});
-        // set_piece(board, 23, {PieceType::Pawn, PieceSide::Black});
-        // set_piece(board, 33, {PieceType::Pawn, PieceSide::Black});
-        // set_piece(board, 44, {PieceType::Pawn, PieceSide::Black});
-        // set_piece(board, 54, {PieceType::Pawn, PieceSide::Black});
-        // set_piece(board, 63, {PieceType::Pawn, PieceSide::Black});
-        // set_piece(board, 71, {PieceType::Pawn, PieceSide::Black});
-        // set_piece(board, 78, {PieceType::Pawn, PieceSide::Black});
-
-        set_piece(board, 14, {PieceType::Pawn, PieceSide::White});
-        set_piece(board, 41, {PieceType::Pawn, PieceSide::White});
-        set_piece(board, 49, {PieceType::Pawn, PieceSide::Black});
-        set_piece(board, 30, {PieceType::Queen, PieceSide::Black});
+        set_piece(board, 60, {PieceType::King, PieceSide::White});
+        set_piece(board, 51, {PieceType::King, PieceSide::Black});
+        set_piece(board, 29, {PieceType::Knight, PieceSide::White});
+        set_piece(board, 69, {PieceType::Knight, PieceSide::White});
+        set_piece(board, 21, {PieceType::Knight, PieceSide::Black});
+        set_piece(board, 61, {PieceType::Knight, PieceSide::Black});
+        set_piece(board, 20, {PieceType::Rook, PieceSide::White});
+        set_piece(board, 13, {PieceType::Rook, PieceSide::Black});
+        set_piece(board, 77, {PieceType::Rook, PieceSide::White});
+        set_piece(board, 70, {PieceType::Rook, PieceSide::Black});
+        set_piece(board, 48, {PieceType::Bishop, PieceSide::White});
+        set_piece(board, 49, {PieceType::Bishop, PieceSide::White});
+        set_piece(board, 50, {PieceType::Bishop, PieceSide::White});
+        set_piece(board, 40, {PieceType::Bishop, PieceSide::Black});
+        set_piece(board, 41, {PieceType::Bishop, PieceSide::Black});
+        set_piece(board, 42, {PieceType::Bishop, PieceSide::Black});
         set_piece(board, 39, {PieceType::Queen, PieceSide::White});
+        set_piece(board, 30, {PieceType::Queen, PieceSide::Black});
+
+        set_piece(board, 12, {PieceType::Pawn, PieceSide::White});
+        set_piece(board, 19, {PieceType::Pawn, PieceSide::White});
+        set_piece(board, 27, {PieceType::Pawn, PieceSide::White});
+        set_piece(board, 36, {PieceType::Pawn, PieceSide::White});
+        set_piece(board, 46, {PieceType::Pawn, PieceSide::White});
+        set_piece(board, 57, {PieceType::Pawn, PieceSide::White});
+        set_piece(board, 67, {PieceType::Pawn, PieceSide::White});
+        set_piece(board, 76, {PieceType::Pawn, PieceSide::White});
+        set_piece(board, 84, {PieceType::Pawn, PieceSide::White});
+        set_piece(board, 6, {PieceType::Pawn, PieceSide::Black});
+        set_piece(board, 14, {PieceType::Pawn, PieceSide::Black});
+        set_piece(board, 23, {PieceType::Pawn, PieceSide::Black});
+        set_piece(board, 33, {PieceType::Pawn, PieceSide::Black});
+        set_piece(board, 44, {PieceType::Pawn, PieceSide::Black});
+        set_piece(board, 54, {PieceType::Pawn, PieceSide::Black});
+        set_piece(board, 63, {PieceType::Pawn, PieceSide::Black});
+        set_piece(board, 71, {PieceType::Pawn, PieceSide::Black});
+        set_piece(board, 78, {PieceType::Pawn, PieceSide::Black});
+
+        // set_piece(board, 14, {PieceType::Pawn, PieceSide::White});
+        // set_piece(board, 41, {PieceType::Pawn, PieceSide::White});
+        // set_piece(board, 49, {PieceType::Pawn, PieceSide::Black});
+        // set_piece(board, 30, {PieceType::Queen, PieceSide::Black});
+        // set_piece(board, 39, {PieceType::Queen, PieceSide::White});
 
         set_turn(board, PieceTurn::WhiteColor);
     }

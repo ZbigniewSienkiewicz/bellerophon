@@ -33,6 +33,7 @@ private:
     void highlightMoves(int index);
     void clearHighlights();
     void highlightKingIfChecked();
+    hexengine::Move showPromotionMenu(const std::vector<hexengine::Move>& promotionMoves, QPoint screenPos);
     qreal m_maxZ;
     qreal m_originalZ;
     QGraphicsItem* m_pressedItem = nullptr;

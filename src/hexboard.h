@@ -27,9 +27,10 @@ private:
     static const PieceSource piece_sources[];
     void drawBoard();
     void drawPieces();
-    void updatePieceMovableFlags() const;
+    void redrawPieces();
     void addHexagon(int index);
     static const QString &get_piece_path(hexengine::Piece piece);
+    void placePieceAt(QGraphicsItem* item, int index);
     void highlightMoves(int index);
     void clearHighlights();
     void highlightKingIfChecked();

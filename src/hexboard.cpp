@@ -284,6 +284,8 @@ void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
                 hexengine::Move move{};
                 bool isPromotion = !promotionMoves.empty();
                 if (isPromotion) {
+                    placePieceAt(m_pressedItem, targetIndex);
+                    m_pressedItem->setZValue(m_originalZ);
                     move = showPromotionMenu(promotionMoves, event->screenPos());
                     if (move.from == -1) { // Cancelled
                         m_pressedItem->setPos(m_startPos);

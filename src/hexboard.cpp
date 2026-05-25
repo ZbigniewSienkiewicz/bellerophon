@@ -272,8 +272,8 @@ void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 
             if (hexItem && m_startIndex != -1) {
                 const int targetIndex = hexItem->data(0).toInt();
-
-                auto legalMoves = hexengine::get_legal_moves_at(hexengine::get_main_board(), m_startIndex);
+                std::vector<hexengine::Move> legalMoves;
+                hexengine::get_legal_moves_at(hexengine::get_main_board(), m_startIndex, legalMoves);
                 std::vector<hexengine::Move> promotionMoves;
                 for (const auto& m : legalMoves) {
                     if (m.to == targetIndex && m.promotion != hexengine::PieceType::Empty) {
@@ -282,7 +282,16 @@ void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
                 }
 
                 hexengine::Move move{};
-                bool isPromotion = !promotionMoves.empty();
+                bool found = false;
+                for (const auto& m : legalMoves) {
+                    if (m.to == targetIndex && m.promotion == hexengine::PieceType::Empty) {
+                        move = m;
+                        found = true;
+                        break;
+                    }
+                }
+
+                const bool isPromotion = !promotionMoves.empty();
                 if (isPromotion) {
                     placePieceAt(m_pressedItem, targetIndex);
                     m_pressedItem->setZValue(m_originalZ);
@@ -295,13 +304,11 @@ void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
                         QGraphicsScene::mouseReleaseEvent(event);
                         return;
                     }
-                } else {
-                    move = {m_startIndex, targetIndex,
-                            hexengine::get_piece(hexengine::get_main_board(), targetIndex),
-                            hexengine::PieceType::Empty};
+                    found = true;
                 }
 
-                if (hexengine::make_move(move)) {
+                if (found) {
+                    hexengine::make_move(hexengine::get_main_board(), move);
                     moved = true;
                 }
             }
@@ -328,10 +335,10 @@ hexengine::Move HexBoard::showPromotionMenu(const std::vector<hexengine::Move>& 
     if (promotionMoves.empty()) return {-1, -1, {hexengine::PieceType::Empty, hexengine::PieceSide::None}, hexengine::PieceType::Empty};
 
     QMenu menu;
-    hexengine::PieceSide side = hexengine::get_piece(hexengine::get_main_board(), promotionMoves[0].from).side;
+    const hexengine::PieceSide side = hexengine::get_piece(hexengine::get_main_board(), promotionMoves[0].from).side;
 
     for (const auto& move : promotionMoves) {
-        hexengine::Piece piece = {move.promotion, side};
+        const hexengine::Piece piece = {move.promotion, side};
         QString path = get_piece_path(piece);
         QIcon icon(path);
         QString text;
@@ -346,9 +353,9 @@ hexengine::Move HexBoard::showPromotionMenu(const std::vector<hexengine::Move>& 
         action->setData(static_cast<int>(move.promotion));
     }
 
-    QAction* selectedAction = menu.exec(screenPos);
+    const QAction* selectedAction = menu.exec(screenPos);
     if (selectedAction) {
-        hexengine::PieceType selectedType = static_cast<hexengine::PieceType>(selectedAction->data().toInt());
+        const auto selectedType = static_cast<hexengine::PieceType>(selectedAction->data().toInt());
         for (const auto& move : promotionMoves) {
             if (move.promotion == selectedType) return move;
         }
@@ -357,7 +364,7 @@ hexengine::Move HexBoard::showPromotionMenu(const std::vector<hexengine::Move>& 
     return {-1, -1, {hexengine::PieceType::Empty, hexengine::PieceSide::None}, hexengine::PieceType::Empty};
 }
 
-void HexBoard::placePieceAt(QGraphicsItem* item, int index) {
+void HexBoard::placePieceAt(QGraphicsItem* item, const int index) {
     if (!item) return;
     const hexengine::CubeCoords &hex_coords = hexengine::get_hex_qrs(index);
     constexpr qreal size = 30.0;
@@ -375,7 +382,8 @@ void HexBoard::placePieceAt(QGraphicsItem* item, int index) {
 }
 
 void HexBoard::highlightMoves(const int index) {
-    const auto moves = hexengine::get_legal_moves_at(hexengine::get_main_board(), index);
+    std::vector<hexengine::Move> moves;
+    hexengine::get_legal_moves_at(hexengine::get_main_board(), index, moves);
     for (const auto& move : moves) {
         const hexengine::CubeCoords &coords = hexengine::get_hex_qrs(move.to);
         constexpr qreal size = 30.0;
@@ -411,7 +419,7 @@ void HexBoard::highlightKingIfChecked() {
             int king_idx = -1;
             const auto& board = hexengine::get_main_board();
             for (int i=0; i<hexengine::HEXBOARD_SIZE; ++i) {
-                if (board.board[i].type == hexengine::King && board.board[i].side == side) {
+                if (board.board_array[i].type == hexengine::King && board.board_array[i].side == side) {
                     king_idx = i;
                     break;
                 }

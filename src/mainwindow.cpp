@@ -23,6 +23,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->graphicsView->setMinimumSize(board->sceneRect().size().toSize());
     adjustSize();
     ui->graphicsView->setMinimumSize(0, 0);
+
+    connect(ui->actionRandom_vs_random, &QAction::triggered, board, &HexBoard::random_vs_random_game);
+    connect(ui->actionSet_startup_position, &QAction::triggered, board, &HexBoard::setup_startup_position);
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)

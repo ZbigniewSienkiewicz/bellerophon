@@ -9,6 +9,9 @@
 #include <QMenu>
 #include <QAction>
 #include <QIcon>
+#include <QPropertyAnimation>
+#include <QEasingCurve>
+#include <QTimer>
 #include <cmath>
 
 constexpr int COLUMN_COUNT = 11;
@@ -116,6 +119,7 @@ void HexBoard::drawPieces() {
             QString path = get_piece_path(piece);
             if (!path.isEmpty()) {
                 auto *pieceItem = new QGraphicsSvgItem(path);
+                pieceItem->setData(0, i);
                 pieceItem->setData(1, (int)piece.side);
 
                 const bool my_turn = (piece.side == hexengine::White && turn == hexengine::WhiteColor) ||
@@ -213,6 +217,7 @@ const QString & HexBoard::get_piece_path(const hexengine::Piece piece) {
 }
 
 void HexBoard::mousePressEvent(QGraphicsSceneMouseEvent *event) {
+    if (m_randomGameActive) return;
     clearHighlights();
     m_pressedItem = nullptr;
     m_startIndex = -1;
@@ -257,6 +262,7 @@ void HexBoard::mousePressEvent(QGraphicsSceneMouseEvent *event) {
 }
 
 void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
+    if (m_randomGameActive) return;
     clearHighlights();
     bool moved = false;
     if (m_pressedItem) {
@@ -331,8 +337,93 @@ void HexBoard::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     }
 }
 
-hexengine::Move HexBoard::showPromotionMenu(const std::vector<hexengine::Move>& promotionMoves, QPoint screenPos) {
-    if (promotionMoves.empty()) return {-1, -1, {hexengine::PieceType::Empty, hexengine::PieceSide::None}, hexengine::PieceType::Empty};
+void HexBoard::keyPressEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_Escape) {
+        m_stopRandomGame = true;
+    }
+    QGraphicsScene::keyPressEvent(event);
+}
+
+void HexBoard::random_vs_random_game() {
+    m_randomGameActive = true;
+    m_stopRandomGame = false;
+    performNextRandomMove();
+}
+
+void HexBoard::setup_startup_position() {
+    if (m_randomGameActive) return;
+    hexengine::setup_startup_board(hexengine::get_main_board());
+    redrawPieces();
+    highlightKingIfChecked();
+}
+
+void HexBoard::performNextRandomMove() {
+    auto& board = hexengine::get_main_board();
+    if (m_stopRandomGame || hexengine::is_insufficient_material(board)) {
+        m_stopRandomGame = false;
+        m_randomGameActive = false;
+        return;
+    }
+
+    hexengine::Move move = hexengine::get_random_move(board);
+
+    if (move.from == -1) {
+        m_randomGameActive = false;
+        return;
+    }
+
+    QGraphicsSvgItem* pieceItem = nullptr;
+    for (auto* item : items()) {
+        if (auto* svgItem = qgraphicsitem_cast<QGraphicsSvgItem*>(item)) {
+            if (svgItem->data(0).toInt() == move.from) {
+                pieceItem = svgItem;
+                break;
+            }
+        }
+    }
+
+    if (!pieceItem) {
+        // Should not happen if engine and board are in sync
+        hexengine::make_move(board, move);
+        redrawPieces();
+        highlightKingIfChecked();
+        QTimer::singleShot(100, this, &HexBoard::performNextRandomMove);
+        return;
+    }
+
+    // Animation
+    const hexengine::CubeCoords &target_coords = hexengine::get_hex_qrs(move.to);
+    constexpr qreal size = 30.0;
+    const qreal targetX = size * 1.5 * target_coords.q;
+    const qreal targetY = size * 1.7320508075688773 * (target_coords.r + target_coords.q / 2.0);
+
+    QRectF pieceRect = pieceItem->boundingRect();
+    if (pieceRect.width() <= 0 || pieceRect.height() <= 0) {
+        pieceRect = QRectF(0, 0, 45, 45);
+    }
+    QPointF targetPos(targetX - pieceRect.width() / 2.0, targetY - pieceRect.height() / 2.0);
+
+    pieceItem->setZValue(m_maxZ++);
+
+    auto* animation = new QPropertyAnimation(pieceItem, "pos");
+    animation->setDuration(300);
+    animation->setEndValue(targetPos);
+    animation->setEasingCurve(QEasingCurve::InOutQuad);
+
+    connect(animation, &QPropertyAnimation::finished, [this, move, animation]() {
+        hexengine::make_move(hexengine::get_main_board(), move);
+        redrawPieces();
+        highlightKingIfChecked();
+        animation->deleteLater();
+        QTimer::singleShot(100, this, &HexBoard::performNextRandomMove);
+    });
+
+    animation->start();
+}
+
+hexengine::Move HexBoard::showPromotionMenu(const std::vector<hexengine::Move>& promotionMoves, const QPoint screenPos) {
+    if (promotionMoves.empty()) return {-1, -1,{hexengine::PieceType::Empty,
+        hexengine::PieceSide::None}, hexengine::PieceType::Empty};
 
     QMenu menu;
     const hexengine::PieceSide side = hexengine::get_piece(hexengine::get_main_board(), promotionMoves[0].from).side;
@@ -361,7 +452,8 @@ hexengine::Move HexBoard::showPromotionMenu(const std::vector<hexengine::Move>& 
         }
     }
 
-    return {-1, -1, {hexengine::PieceType::Empty, hexengine::PieceSide::None}, hexengine::PieceType::Empty};
+    return {-1, -1, {hexengine::PieceType::Empty, hexengine::PieceSide::None},
+        hexengine::PieceType::Empty};
 }
 
 void HexBoard::placePieceAt(QGraphicsItem* item, const int index) {

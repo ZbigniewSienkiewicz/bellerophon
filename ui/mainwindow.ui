@@ -35,12 +35,31 @@
     </property>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuDemo">
+    <property name="title">
+     <string>Demo</string>
+    </property>
+    <addaction name="actionRandom_vs_random"/>
+    <addaction name="separator"/>
+    <addaction name="actionSet_startup_position"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuDemo"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionRandom_vs_random">
+   <property name="text">
+    <string>Random vs. random</string>
+   </property>
+  </action>
+  <action name="actionSet_startup_position">
+   <property name="text">
+    <string>Set startup position</string>
    </property>
   </action>
  </widget>

@@ -2816,6 +2816,15 @@ inline constexpr int pawn_moves[HEXBOARD_SIZE][PAWN_COLOR][PAWN_MOVE_TYPE][MAX_P
         return false;
     }
 
+    bool is_insufficient_material(const HBoard &board) {
+        for (const auto hexagon : board.board_array) {
+            if (hexagon.type != PieceType::Empty && hexagon.type != PieceType::King) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     void get_legal_king_moves(HBoard &board, std::vector<Move> &moves, const bool only_captures) {
         const int color_idx = (board.turn == PieceTurn::WhiteColor) ? 0 : 1;
         const int king_pos = board.king_pos[color_idx];

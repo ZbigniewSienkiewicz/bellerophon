@@ -89,6 +89,8 @@ namespace hexengine {
 
     bool is_king_in_check(const HBoard &board, PieceSide side);
 
+    bool is_insufficient_material(const HBoard &board);
+
     void get_legal_king_moves(HBoard &board, std::vector<Move> &moves, bool only_captures = false);
 
     void get_legal_king_moves_at(HBoard &board, int index, std::vector<Move> &moves, bool only_captures = false);
